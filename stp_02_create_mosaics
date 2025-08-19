@@ -1,0 +1,22 @@
+var AOI = geometry()//define your AOI
+
+var imageVisParam = {bands: ["B3","B2","B1"],
+                      gamma: 1,
+                      max: 1645,
+                      min: 166,
+                      opacity: 1}
+var colecao = ee.ImageCollection('IMAGE COLLECTION CREATED FROM PLANET API')
+              .filterDate('2021-03-22','2021-03-23')
+var singleIMG = colecao.mosaic()
+
+
+Map.addLayer(singleIMG, imageVisParam)
+
+Export.image.toAsset({
+ image: singleIMG,
+ assetId: 'DEFINE YOUR IMAGECOLLECTION OF IMAGES TO BE CLASSIFIED',
+ description: '',
+ region: AOI,
+ scale: 3,
+ maxPixels: 1e13
+})

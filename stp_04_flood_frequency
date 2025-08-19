@@ -1,0 +1,121 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-56.38764170107317, -19.364606795254353],
+          [-56.38764170107317, -19.430507144571664],
+          [-56.30335596498919, -19.430507144571664],
+          [-56.30335596498919, -19.364606795254353]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// ----------------------
+// STEP 1 - Center map on Area 2
+// ----------------------
+Map.setCenter(-56.34343938370586, -19.395697440019152, 14); // Area 2
+
+
+// ----------------------
+// STEP 2 - Load classified image collection
+// ----------------------
+var collection = ee.ImageCollection('users/marianadramos/tcc/A2_RF')
+  .sort('system:time_start', true)
+  .select(['classification']);  // Select classification band
+
+
+// ----------------------
+// STEP 3 - Reclassify images (example: highlight "water")
+// ----------------------
+// Mapping scheme: 1 = water → 1, 2 = wet soil → 0.5, 3 = dry soil → 0, 4 = vegetation → 0
+var reclassified = collection.map(function(img) {
+  return img.remap([1, 2, 3, 4], [1, 0.5, 0, 0])
+    .copyProperties(img, ['system:time_start']);
+});
+
+
+// ----------------------
+// STEP 4 - Visualization palette
+// ----------------------
+var palette = ['ffffff','b3cde0','6497b1','005b96','03396c','011f4b'];
+
+// Display temporal sum of reclassified images
+Map.addLayer(reclassified.sum(), {min: 0, max: 100, palette: palette}, 'A2', 1);
+
+
+// ----------------------
+// STEP 5 - Time series chart for selected region
+// ----------------------
+var chart = ui.Chart.image.series({
+  imageCollection: reclassified,
+  region: ee.Geometry.Rectangle(
+    -56.38764170107317, -19.430507144571664,
+    -56.30335596498919, -19.364606795254353
+  ),
+  reducer: ee.Reducer.sum(),
+  scale: 3
+});
+print(chart);
+
+
+// ----------------------
+// STEP 6 - Export summed frequency image
+// ----------------------
+Export.image.toDrive({
+  image: reclassified.sum(),
+  description: 'A2_FREQ',
+  region: geometry,   // ⚠️ Make sure "geometry" is defined
+  scale: 3,
+  folder: 'workshop',
+  maxPixels: 1e13
+});
+
+
+// ----------------------
+// STEP 7 - Area calculation per class (on the SUM image)
+// ----------------------
+// Example: total area occupied by each class considering frequency
+var summedImage = reclassified.sum();
+var pixelArea = ee.Image.pixelArea();
+
+// Calculate area per value (1 = water, 0.5 = wet soil, etc.)
+var classes = [1, 0.5, 0, 0];  // same as in remap
+
+var areas = ee.List(classes).map(function(val) {
+  var area = summedImage.eq(ee.Number(val))
+    .multiply(pixelArea)
+    .reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: summedImage.geometry(),
+      scale: 3,
+      maxPixels: 1e13
+    });
+  return ee.Feature(null, {
+    'class_value': val,
+    'area_ha': ee.Number(area.get('remapped')).divide(10000) // m² → ha
+  });
+});
+
+var areaResults = ee.FeatureCollection(areas);
+print('Area by Class (ha)', areaResults);
+
+// ----------------------
+// (Optional) Export area table to Drive
+// ----------------------
+Export.table.toDrive({
+  collection: areaResults,
+  description: 'A2_Class_Area',
+  fileFormat: 'CSV'
+});
+
+
+
+
+
+
+
+
+

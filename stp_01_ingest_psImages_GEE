@@ -1,0 +1,71 @@
+// run this code at Google Cloud terminal
+
+curl -u 'INSERT YOUR API KEY HERE!': -H 'Content-Type: application/json' -X POST -d '{
+  "name": "ORDER_OUT_JAN19",
+  "products": [
+    {
+      "item_ids": [
+      //LIST YOUR PS IMAGES ID'S ON THE LIST:  
+        "20181008_141601_0f3d",
+        "20181008_141600_0f3d",
+        "20181008_133002_1011",
+        "20181008_133001_1011",
+        "20181021_133023_102e",
+        "20181110_141122_0f47",
+        "20181110_141121_0f47",
+        "20181203_133139_0f51",
+        "20181203_133138_0f51",
+        "20181216_133231_0f15",
+        "20181216_133230_0f15",
+        "20190103_133151_1002",
+        "20190103_133150_1002",
+        "20190114_140202_1054",
+        "20190114_140201_1054",
+        "20190131_135857_1049",
+        "20190131_135856_1049"
+      ],
+      "item_type": "PSScene4Band",
+      "product_bundle": "analytic_sr_udm2"
+    }
+  ],
+  "tools": [
+    {
+      "clip": {
+        "aoi": {
+          //DEFINE YOUR AOI
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -56.387188,
+                -19.430280
+              ],
+              [
+                -56.304190,
+                -19.430280
+              ],
+              [
+                -56.304190,
+                -19.365041
+              ],
+              [
+                -56.387188,
+                -19.365041
+              ],
+              [
+                -56.387188,
+                -19.430280
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  ],
+  "delivery": {
+    "google_earth_engine": {
+      "project": "insert your earth engine clud project here",
+      "collection": "insert yout ImageCollection ID here"
+    }
+  }
+}' https://api.planet.com/compute/ops/orders/v2
